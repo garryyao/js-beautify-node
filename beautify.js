@@ -210,6 +210,7 @@ function js_beautify(js_source_text, options) {
     }
 
     function set_mode(mode) {
+		token_text && console.log( 'mode:%s,token-text:%s,token-type:%s',mode,token_text,token_type);
         if (flags) {
             flag_store.push(flags);
         }
@@ -220,6 +221,7 @@ function js_beautify(js_source_text, options) {
             var_line_tainted: false,
             var_line_reindented: false,
             in_html_comment: false,
+            in_string_builder: false,
             if_line: false,
             in_case_statement: false, // switch(..){ INSIDE HERE }
             in_case: false, // we're on the exact line with "case 0:"
@@ -248,7 +250,15 @@ function js_beautify(js_source_text, options) {
         }
     }
 
-    function all_lines_start_with(lines, c) {
+	function close_flag(flag){
+		flags[ flag ] = false;
+	}
+
+	function open_flag(flag){
+		flags[ flag ] = true;
+	}
+
+	function all_lines_start_with(lines, c) {
         for (var i = 0; i < lines.length; i++) {
             var line = trim(lines[i]);
             if (line.charAt(0) !== c) {
@@ -296,7 +306,7 @@ function js_beautify(js_source_text, options) {
         parser_pos += 1;
 
 
-        var keep_whitespace = opt_keep_array_indentation && is_array(flags.mode);
+        var keep_whitespace = opt_keep_array_indentation && ( is_array(flags.mode) || flags.in_string_builder );
 
         if (keep_whitespace) {
 
@@ -680,6 +690,7 @@ function js_beautify(js_source_text, options) {
         var t = get_next_token(parser_pos);
         token_text = t[0];
         token_type = t[1];
+		console.log( 'token- text:%s, type:%s', token_text, token_type);
         if (token_type === 'TK_EOF') {
             break;
         }
@@ -1031,7 +1042,7 @@ function js_beautify(js_source_text, options) {
 
             break;
 
-        case 'TK_SEMICOLON':
+			case 'TK_SEMICOLON':
 
             print_token();
             flags.var_line = false;
@@ -1040,6 +1051,10 @@ function js_beautify(js_source_text, options) {
                 // OBJECT mode is weird and doesn't get reset too well.
                 flags.mode = 'BLOCK';
             }
+
+			// String concatenation ended.
+			close_flag( 'in_string_builder' );
+
             break;
 
         case 'TK_STRING':
@@ -1064,10 +1079,15 @@ function js_beautify(js_source_text, options) {
             print_single_space();
             break;
 
-        case 'TK_OPERATOR':
+			case 'TK_OPERATOR':
 
             var space_before = true;
             var space_after = true;
+
+			// String concatenation ended.
+            if (token_text == ',' ) {
+                close_flag( 'in_string_builder' );
+            }
 
             if (flags.var_line && token_text === ',' && (is_expression(flags.mode))) {
                 // do not break on comma, for(var a = 1, b = 2)
@@ -1103,6 +1123,14 @@ function js_beautify(js_source_text, options) {
                 print_token();
                 break;
             }
+
+			// String concatenation started.
+			// '<div>' +
+			// 	'<span>foo</span>' +
+			// '</div>'
+            if (token_text == '+' && last_type == 'TK_STRING' ) {
+				open_flag('in_string_builder');
+			}
 
             if (token_text === ':' && flags.in_case) {
                 if (opt_indent_case)
