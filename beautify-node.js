@@ -50,9 +50,10 @@ or working for you.
       "Options:",
       "-i NUM\tIndent size (1 for TAB)",
       "-b\tPut braces on own line (Allman / ANSI style)",
+      "-c\tIndent case statements",
       "-a\tIndent arrays",
       "-n\tPreserve newlines",
-      "-p\tJSLint-pedantic mode, currently only adds space between \"function ()\"",
+      "-p\tJSLint-pedantic mode - adds space between \"function ()\"; and before condition \" if (foo)\"",
       "",
       "-h\tPrint this help",
       "",
@@ -84,6 +85,10 @@ or working for you.
             options.braces_on_own_line = true;
             break;
 
+          case "-c":
+            options.indent_case = true;
+            break;
+
           case "-a":
             options.keep_array_indentation = false;
             break;
@@ -94,6 +99,10 @@ or working for you.
 
           case "-n":
             options.preserve_newlines = true;
+            break;
+
+          case "-o":
+            options.outputFile = args.shift();
             break;
 
           case "-h":
@@ -116,9 +125,8 @@ or working for you.
 
 
   function beautifySource( sourceFile ) {
-    var line,
-      indent_size = options.indent || 2,
-      indent_char = ( indent_size === 1 ) ? "\t" : " ";
+    var indent_size = options.indent || 2,
+      indent_char = ( indent_size == 1 ) ? "\t" : " ";
 
     sourceFile = sourceFile.replace( /^\s+/, "" );
 
@@ -130,7 +138,9 @@ or working for you.
       result = jsb.js_beautify( sourceFile, {
         indent_size: indent_size,
         indent_char: indent_char,
+		indent_case: options.indent_case,
         preserve_newlines: !!options.preserve_newlines,
+		space_before_conditional : options.jslint_pedantic,
         space_after_anon_function: options.jslint_pedantic,
         keep_array_indentation: options.keep_array_indentation,
         braces_on_own_line: options.braces_on_own_line
@@ -141,9 +151,15 @@ or working for you.
     // Writing to a file would work fine, but the raw console output (printed
     // on screen) was truncated.  Really weird.  So, line by line it is.
 
-    result.split( "\n" ).forEach( function( line, index, array ) {
-      sys.puts( line );
-    });
+	var output = options.outputFile;
+	if ( output )
+		fs.writeFile( output, result );
+	else
+	{
+		result.split( "\n" ).forEach( function( line, index, array ) {
+			console.log( line );
+		 });
+	}
   }
 
 
