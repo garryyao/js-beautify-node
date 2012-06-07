@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*jslint adsafe: false, bitwise: true, browser: true, cap: false, css: false,
   debug: false, devel: true, eqeqeq: true, es5: false, evil: true,
   forin: false, fragment: false, immed: true, laxbreak: false, newcap: true,
@@ -28,22 +30,19 @@ or working for you.
 */
 
 
-require.paths.unshift( "./" );
-
-
 ( function() {
   
   var fs = require( "fs" ),
-    sys = require( "sys" ),
+    util = require( "util" ),
     http = require( "http" ),
     url = require( "url" ),
-    jsb = require( "beautify" ),
+    jsb = require( "./beautify" ),
     options,
     result = "";
 
 
   function printUsage() {
-    sys.puts( [
+    util.puts( [
       "Usage: node beautify-node.js [options] [file || URL || STDIN]",
       "",
       "Reads from standard input if no file or URL is specified.",
@@ -124,7 +123,7 @@ require.paths.unshift( "./" );
     sourceFile = sourceFile.replace( /^\s+/, "" );
 
     if ( sourceFile && sourceFile[0] === "<" ) {
-      sys.puts( "HTML files not supported." );
+      util.puts( "HTML files not supported." );
       process.exit( 0 );
     }
     else {
@@ -141,7 +140,7 @@ require.paths.unshift( "./" );
     // Trying to output `result` in one go had funny side effects on OSX.
     // Writing to a file would work fine, but the raw console output (printed
     // on screen) was truncated.  Really weird.  So, line by line it is.
-    
+
     result.split( "\n" ).forEach( function( line, index, array ) {
       sys.puts( line );
     });
