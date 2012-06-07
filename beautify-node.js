@@ -90,7 +90,7 @@ or working for you.
             break;
 
           case "-a":
-            options.keep_array_indentation = false;
+            options.keep_array_indentation = true;
             break;
 
           case "-p":
