@@ -105,6 +105,10 @@ or working for you.
             options.outputFile = args.shift();
             break;
 
+          case "-d":
+            options.debugMode = true;
+            break;
+
           case "-h":
             printUsage();
             process.exit();
@@ -155,11 +159,7 @@ or working for you.
 	if ( output )
 		fs.writeFile( output, result );
 	else
-	{
-		result.split( "\n" ).forEach( function( line, index, array ) {
-			console.log( line );
-		 });
-	}
+    process.stdout.write(result);
   }
 
 
@@ -227,6 +227,7 @@ or working for you.
   }
 
   options = parseOpts( process.argv );
+  !options.debugMode && ( console.log = function () {} )
   getSourceFile();
   
 }() );
